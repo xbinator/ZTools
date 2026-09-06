@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { DEFAULT_SYNC_SERVER_URL, syncServerUrlToHttp } from './renderer/pluginMarketConfig'
+import { OFFICIAL_SERVICE_HTTP_BASE } from './renderer/pluginMarketConfig'
 import { httpRequest } from '../utils/httpRequest'
 import type { PlatformUpdateInfo, UpdateDownloadSource } from './platformUpdater/types'
 import databaseAPI from './shared/database'
@@ -41,7 +41,7 @@ export function getUpdateSystemType(): string {
 export function getUpdateChannel(): UpdateChannel {
   const version = app.getVersion()
   try {
-    // Beta 订阅属于设备级更新偏好，所有更新查询和心跳统一读取同一设置。
+    // Beta 订阅属于设备级更新偏好，自动检查和手动检查统一读取同一设置。
     const settings = databaseAPI.dbGet(HOST_STORAGE_KEYS.settingsGeneral)
     return resolveUpdateChannel(version, settings?.receiveBetaUpdates === true)
   } catch (error) {
@@ -61,14 +61,14 @@ export async function fetchLatestServerUpdate(): Promise<ServerUpdateInfo | null
     updateChannel: getUpdateChannel()
   })
   const response = await httpRequest(
-    `${syncServerUrlToHttp(DEFAULT_SYNC_SERVER_URL)}/api/updates/latest?${query.toString()}`
+    `${OFFICIAL_SERVICE_HTTP_BASE}/api/updates/latest?${query.toString()}`
   )
   return (response.data as ServerUpdateResponse)?.update ?? null
 }
 
 /**
  * 获取指定版本在当前系统上的 GitHub 和人工下载入口。
- * @param version 服务端心跳返回的目标版本号。
+ * @param version 更新检查返回的目标版本号。
  * @returns 当前系统可用的下载源列表。
  */
 export async function fetchServerUpdateSources(version: string): Promise<UpdateDownloadSource[]> {
@@ -78,7 +78,7 @@ export async function fetchServerUpdateSources(version: string): Promise<UpdateD
     updateChannel: getUpdateChannel()
   })
   const response = await httpRequest(
-    `${syncServerUrlToHttp(DEFAULT_SYNC_SERVER_URL)}/api/updates/downloads?${query.toString()}`
+    `${OFFICIAL_SERVICE_HTTP_BASE}/api/updates/downloads?${query.toString()}`
   )
   const data = response.data as ServerDownloadsResponse
   return Array.isArray(data?.sources) ? data.sources : []

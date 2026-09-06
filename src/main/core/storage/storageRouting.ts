@@ -14,9 +14,7 @@ const ACCOUNT_EXACT_KEYS = new Set([
   'ZTOOLS/user-settings',
   'ZTOOLS/ai-models',
   'ZTOOLS/web-search-engines',
-  'ZTOOLS/avatar',
-  'SYNC/profile',
-  'SYNC/private-session'
+  'ZTOOLS/avatar'
 ])
 
 const DEVICE_EXACT_KEYS = new Set([
@@ -32,15 +30,9 @@ const DEVICE_EXACT_KEYS = new Set([
   toHostDocId(HOST_STORAGE_KEYS.enabledMainPushPlugin),
   toHostDocId(HOST_STORAGE_KEYS.detachedWindowSizes),
   'ZTOOLS/plugin-market-cache',
-  'ZTOOLS/development-projects',
-  'SYNC/accounts',
-  'SYNC/current-account',
-  'SYNC/config',
-  'SYNC/separated-auth-migrated',
-  'AUTH/official-account'
+  'ZTOOLS/development-projects'
 ])
 
-const DEVICE_PREFIXES = ['SYNC/']
 const ACCOUNT_PREFIXES = ['PLUGIN/']
 
 export function getStorageScopeForKey(key?: string | null): StorageScope {
@@ -48,7 +40,6 @@ export function getStorageScopeForKey(key?: string | null): StorageScope {
   if (ACCOUNT_EXACT_KEYS.has(key)) return 'account'
   if (DEVICE_EXACT_KEYS.has(key)) return 'device'
   if (ACCOUNT_PREFIXES.some((prefix) => key.startsWith(prefix))) return 'account'
-  if (DEVICE_PREFIXES.some((prefix) => key.startsWith(prefix))) return 'device'
   if (key === 'ZTOOLS/' || key === 'ZTOOLS') return 'both'
   if (key.startsWith('ZTOOLS/')) return 'device'
   return 'account'

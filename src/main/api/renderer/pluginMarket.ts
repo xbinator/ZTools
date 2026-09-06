@@ -1,11 +1,6 @@
 import { httpGet } from '../../utils/httpRequest.js'
 import databaseAPI from '../shared/database'
-import {
-  PluginMarketAuthRequiredError,
-  PluginMarketAuthMode,
-  getPluginMarketApiBase,
-  requestPluginMarket
-} from './pluginMarketConfig'
+import { getPluginMarketApiBase, requestPluginMarket } from './pluginMarketConfig'
 
 // ━━━ Types ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -121,41 +116,6 @@ type PluginMarketRankingResponse = {
 }
 
 type PluginMarketRankings = Record<PluginMarketRankingType, PluginMarketPlugin[]>
-
-type PluginMarketCommentItem = {
-  id: number
-  pluginName: string
-  uid: string
-  nickname: string
-  avatarUrl?: string
-  parentId?: number | null
-  parent?: PluginMarketCommentParent | null
-  content: string
-  likeCount: number
-  liked: boolean
-  deleted?: boolean
-  createdAt: number
-  updatedAt: number
-}
-
-type PluginMarketCommentParent = {
-  id: number
-  uid: string
-  nickname: string
-  avatarUrl?: string
-  content: string
-  deleted: boolean
-  createdAt: number
-}
-
-type PluginMarketCommentPage = {
-  items: PluginMarketCommentItem[]
-  page: {
-    page: number
-    pageSize: number
-    total: number
-  }
-}
 
 /** fetchPluginMarket 的返回结果 */
 export type PluginMarketResult = {
@@ -406,109 +366,6 @@ export class PluginMarketAPI {
   }
 
   /**
-   * 获取插件评论列表，并可让服务端返回包含指定评论的分页。
-   * @param pluginName 插件唯一名称。
-   * @param page 请求页码。
-   * @param pageSize 每页数量。
-   * @param anchorId 需要定位的评论标识；不定位时传 0。
-   * @returns 评论列表请求结果。
-   */
-  public async fetchComments(
-    pluginName: string,
-    page = 1,
-    pageSize = 20,
-    anchorId = 0
-  ): Promise<{
-    success: boolean
-    data?: PluginMarketCommentPage
-    error?: string
-    authRequired?: boolean
-  }> {
-    try {
-      const query = new URLSearchParams({
-        pluginName,
-        page: String(page),
-        pageSize: String(pageSize)
-      })
-      if (anchorId > 0) query.set('anchorId', String(anchorId))
-      const response = await requestPluginMarket(`/plugins/comments?${query.toString()}`)
-      return { success: true, data: this.parseCommentPage(response.data) }
-    } catch (error: unknown) {
-      return this.commentError(error, '评论加载失败')
-    }
-  }
-
-  public async createComment(input: {
-    pluginName: string
-    content: string
-    parentId?: number | null
-  }): Promise<{
-    success: boolean
-    data?: PluginMarketCommentItem
-    error?: string
-    authRequired?: boolean
-  }> {
-    try {
-      const response = await requestPluginMarket(
-        '/plugins/comments',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(input)
-        },
-        PluginMarketAuthMode.REQUIRED
-      )
-      return { success: true, data: this.parseCommentItem(response.data) }
-    } catch (error: unknown) {
-      return this.commentError(error, '评论发布失败')
-    }
-  }
-
-  public async toggleCommentLike(commentId: number): Promise<{
-    success: boolean
-    data?: { liked: boolean; likeCount: number }
-    error?: string
-    authRequired?: boolean
-  }> {
-    try {
-      const response = await requestPluginMarket(
-        `/plugins/comments/${commentId}/like`,
-        {
-          method: 'POST'
-        },
-        PluginMarketAuthMode.REQUIRED
-      )
-      const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
-      return {
-        success: true,
-        data: {
-          liked: Boolean(data?.liked),
-          likeCount: Number(data?.likeCount || 0)
-        }
-      }
-    } catch (error: unknown) {
-      return this.commentError(error, '操作失败')
-    }
-  }
-
-  public async deleteComment(
-    commentId: number
-  ): Promise<{ success: boolean; error?: string; authRequired?: boolean }> {
-    try {
-      await requestPluginMarket(
-        `/plugins/comments/${commentId}`,
-        {
-          method: 'DELETE'
-        },
-        PluginMarketAuthMode.REQUIRED
-      )
-      return { success: true }
-    } catch (error: unknown) {
-      return this.commentError(error, '删除失败')
-    }
-  }
-
-  /**
    * 生成插件列表的指纹字符串。
    * 用于判断缓存的 storefront 是否需要重新构建（插件名称/版本/平台变化时失效）。
    * @param plugins - 全量插件列表
@@ -524,59 +381,6 @@ export class PluginMarketAPI {
   private parseMarketPluginsResponse(value: unknown): MarketPluginsResponse {
     const data = typeof value === 'string' ? JSON.parse(value) : value
     return data && typeof data === 'object' ? (data as MarketPluginsResponse) : {}
-  }
-
-  private parseCommentPage(value: unknown): PluginMarketCommentPage {
-    const data = typeof value === 'string' ? JSON.parse(value) : value
-    const page = (data as PluginMarketCommentPage)?.page || { page: 1, pageSize: 20, total: 0 }
-    const items = Array.isArray((data as PluginMarketCommentPage)?.items)
-      ? (data as PluginMarketCommentPage).items.map((item) => this.parseCommentItem(item))
-      : []
-    return { items, page }
-  }
-
-  private parseCommentItem(value: unknown): PluginMarketCommentItem {
-    const item = (typeof value === 'string' ? JSON.parse(value) : value) as PluginMarketCommentItem
-    return {
-      id: Number(item?.id || 0),
-      pluginName: String(item?.pluginName || ''),
-      uid: String(item?.uid || ''),
-      nickname: String(item?.nickname || ''),
-      avatarUrl: String(item?.avatarUrl || ''),
-      parentId: item?.parentId == null ? null : Number(item.parentId),
-      parent: item?.parent ? this.parseCommentParent(item.parent) : null,
-      content: String(item?.content || ''),
-      likeCount: Number(item?.likeCount || 0),
-      liked: Boolean(item?.liked),
-      deleted: Boolean(item?.deleted),
-      createdAt: Number(item?.createdAt || 0),
-      updatedAt: Number(item?.updatedAt || 0)
-    }
-  }
-
-  private parseCommentParent(value: unknown): PluginMarketCommentParent {
-    const item = (
-      typeof value === 'string' ? JSON.parse(value) : value
-    ) as PluginMarketCommentParent
-    return {
-      id: Number(item?.id || 0),
-      uid: String(item?.uid || ''),
-      nickname: String(item?.nickname || ''),
-      avatarUrl: String(item?.avatarUrl || ''),
-      content: String(item?.content || ''),
-      deleted: Boolean(item?.deleted),
-      createdAt: Number(item?.createdAt || 0)
-    }
-  }
-
-  private commentError(
-    error: unknown,
-    fallback: string
-  ): { success: false; error: string; authRequired?: boolean } {
-    if (error instanceof PluginMarketAuthRequiredError) {
-      return { success: false, error: error.message, authRequired: true }
-    }
-    return { success: false, error: error instanceof Error ? error.message : fallback }
   }
 
   /**

@@ -1047,30 +1047,6 @@ window.ztools = {
       await electron.ipcRenderer.invoke('internal:fetch-plugin-market'),
     fetchPluginMarketRecommendations: async (limit) =>
       await electron.ipcRenderer.invoke('internal:fetch-plugin-market-recommendations', limit),
-    fetchPluginMarketComments: async (pluginName, page, pageSize, anchorId) =>
-      await electron.ipcRenderer.invoke(
-        'internal:fetch-plugin-market-comments',
-        pluginName,
-        page,
-        pageSize,
-        anchorId
-      ),
-    createPluginMarketComment: async (input) =>
-      await electron.ipcRenderer.invoke('internal:create-plugin-market-comment', input),
-    togglePluginMarketCommentLike: async (commentId) =>
-      await electron.ipcRenderer.invoke('internal:toggle-plugin-market-comment-like', commentId),
-    deletePluginMarketComment: async (commentId) =>
-      await electron.ipcRenderer.invoke('internal:delete-plugin-market-comment', commentId),
-    notificationSummary: async () =>
-      await electron.ipcRenderer.invoke('internal:notification-summary'),
-    notificationList: async (beforeId, limit, unreadOnly) =>
-      await electron.ipcRenderer.invoke('internal:notification-list', beforeId, limit, unreadOnly),
-    notificationMarkRead: async (id) =>
-      await electron.ipcRenderer.invoke('internal:notification-mark-read', id),
-    notificationMarkAllRead: async () =>
-      await electron.ipcRenderer.invoke('internal:notification-mark-all-read'),
-    notificationArchive: async (id) =>
-      await electron.ipcRenderer.invoke('internal:notification-archive', id),
     installPluginFromMarket: async (plugin) =>
       await electron.ipcRenderer.invoke('internal:install-plugin-from-market', plugin),
     cancelPluginMarketDownload: async (pluginNameOrTaskId) =>
@@ -1270,137 +1246,11 @@ window.ztools = {
     updaterSetAutoCheck: async (enabled) =>
       await electron.ipcRenderer.invoke('internal:updater-set-auto-check', enabled),
 
-    // ==================== 数据同步 API ====================
-    syncTestConnection: async (config) =>
-      await electron.ipcRenderer.invoke('sync:test-connection', config),
-    syncGetCaptchaConfig: async (params) =>
-      await electron.ipcRenderer.invoke('sync:get-captcha-config', params),
-    accountGetSession: async () => await electron.ipcRenderer.invoke('account:get-session'),
-    accountLogin: async (params) => await electron.ipcRenderer.invoke('account:login', params),
-    accountSaveSession: async (params) =>
-      await electron.ipcRenderer.invoke('account:save-session', params),
-    accountLogout: async () => await electron.ipcRenderer.invoke('account:logout'),
-    /**
-     * 修改当前官方账号密码，并在成功后退出本地登录。
-     * @param {{currentPassword: string, newPassword: string}} params 密码修改参数
-     * @returns {Promise<{success: boolean, error?: string}>} 修改结果
-     */
-    accountChangePassword: async (params) =>
-      await electron.ipcRenderer.invoke('account:change-password', params),
-    /**
-     * 永久删除当前官方账号及其服务端数据。
-     * @returns {Promise<{success: boolean, error?: string}>} 删除账号和本地退出结果
-     */
-    accountDelete: async () => await electron.ipcRenderer.invoke('account:delete'),
-    syncLogin: async (params) => await electron.ipcRenderer.invoke('sync:login', params),
-    syncLoginPrivate: async (params) =>
-      await electron.ipcRenderer.invoke('sync:login-private', params),
-    /**
-     * 注销当前私有同步服务器会话。
-     * @returns {Promise<{success: boolean, error?: string}>} 主进程注销结果
-     */
-    syncLogoutPrivate: async () => await electron.ipcRenderer.invoke('sync:logout-private'),
-    syncSaveConfig: async (config) => await electron.ipcRenderer.invoke('sync:save-config', config),
-    syncGetConfig: async () => await electron.ipcRenderer.invoke('sync:get-config'),
-    syncGetState: async () => await electron.ipcRenderer.invoke('sync:get-state'),
-    syncGetStatus: async () => await electron.ipcRenderer.invoke('sync:get-status'),
-    syncGetDefaultImportStatus: async () =>
-      await electron.ipcRenderer.invoke('sync:get-default-import-status'),
-    syncImportDefaultData: async () =>
-      await electron.ipcRenderer.invoke('sync:import-default-data'),
-    syncSkipDefaultImport: async () =>
-      await electron.ipcRenderer.invoke('sync:skip-default-import'),
-    syncGetRetryStatus: async () => await electron.ipcRenderer.invoke('sync:get-retry-status'),
-    syncGetAccountStats: async () => await electron.ipcRenderer.invoke('sync:get-account-stats'),
-    /**
-     * 获取当前官方账号的 AI 积分。
-     * @returns {Promise<unknown>} 积分查询结果
-     */
-    syncGetAccountCredits: async () =>
-      await electron.ipcRenderer.invoke('sync:get-account-credits'),
-    /**
-     * 获取官方 AI 每日签到状态。
-     * @returns {Promise<unknown>} 签到状态查询结果
-     */
-    syncGetAICheckinStatus: async () =>
-      await electron.ipcRenderer.invoke('sync:get-ai-checkin-status'),
-    /**
-     * 执行当前账号今天的官方 AI 签到。
-     * @returns {Promise<unknown>} 签到执行结果
-     */
-    syncAICheckin: async () => await electron.ipcRenderer.invoke('sync:ai-checkin'),
-    /**
-     * 创建官方 AI 积分充值订单。
-     * @param {string} amount 人民币充值金额
-     * @returns {Promise<unknown>} 订单创建结果
-     */
-    syncCreateAIRechargeOrder: async (amount) =>
-      await electron.ipcRenderer.invoke('sync:create-ai-recharge-order', amount),
-    /**
-     * 查询官方 AI 积分充值订单状态。
-     * @param {string} orderId 服务端订单编号
-     * @returns {Promise<unknown>} 订单查询结果
-     */
-    syncGetAIRechargeOrder: async (orderId) =>
-      await electron.ipcRenderer.invoke('sync:get-ai-recharge-order', orderId),
-    /**
-     * 在独立支付窗口中打开爱发电收银台。
-     * @param {string} paymentUrl 服务端签发的收银台链接
-     * @returns {Promise<unknown>} 页面打开结果
-     */
-    syncOpenAIRechargeURL: async (paymentUrl) =>
-      await electron.ipcRenderer.invoke('sync:open-ai-recharge-url', paymentUrl),
-    /**
-     * 关闭当前爱发电支付窗口并恢复 ZTools 主窗口。
-     * @returns {Promise<unknown>} 窗口关闭结果
-     */
-    syncCloseAIRechargeWindow: async () =>
-      await electron.ipcRenderer.invoke('sync:close-ai-recharge-window'),
-    syncGetAccountProfile: async () =>
-      await electron.ipcRenderer.invoke('sync:get-account-profile'),
-    syncUploadAccountAvatar: async (avatarPath) =>
-      await electron.ipcRenderer.invoke('sync:upload-account-avatar', avatarPath),
-    syncRetryNow: async () => await electron.ipcRenderer.invoke('sync:retry-now'),
-    syncPerformSync: async () => await electron.ipcRenderer.invoke('sync:perform-sync'),
-    syncStopAutoSync: async () => await electron.ipcRenderer.invoke('sync:stop-auto-sync'),
-    syncGetUnsyncedCount: async () => await electron.ipcRenderer.invoke('sync:get-unsynced-count'),
-    syncGetConflictCount: async () => await electron.ipcRenderer.invoke('sync:get-conflict-count'),
-    syncListConflicts: async () => await electron.ipcRenderer.invoke('sync:list-conflicts'),
-    syncGetConflictDetail: async (docId) =>
-      await electron.ipcRenderer.invoke('sync:get-conflict-detail', docId),
-    syncResolveConflict: async (docId, sourceRev) =>
-      await electron.ipcRenderer.invoke('sync:resolve-conflict', { docId, sourceRev }),
+    // ==================== 本地数据迁移 API ====================
     storageGetInitState: async () => await electron.ipcRenderer.invoke('storage:get-init-state'),
     storageStartFresh: async () => await electron.ipcRenderer.invoke('storage:start-fresh'),
     storageImportLegacy: async (options) =>
       await electron.ipcRenderer.invoke('storage:import-legacy', options),
-    syncResetLocalSyncState: async () =>
-      await electron.ipcRenderer.invoke('sync:reset-local-sync-state'),
-    syncForcePushAll: async () => await electron.ipcRenderer.invoke('sync:force-push-all'),
-    // GitHub OAuth 登录（轮询方式）
-    syncGithubInitSession: async (params) =>
-      await electron.ipcRenderer.invoke('sync:github-init-session', params),
-    syncGithubOpenBrowser: async (params) =>
-      await electron.ipcRenderer.invoke('sync:github-open-browser', params),
-    syncGithubPollStatus: async (params) =>
-      await electron.ipcRenderer.invoke('sync:github-poll-status', params),
-    // 更新用户昵称
-    syncUpdateNickname: async (params) =>
-      await electron.ipcRenderer.invoke('sync:update-nickname', params),
-    onSyncStatusChanged: (callback) => {
-      const handler = (_event, payload) => {
-        if (typeof callback === 'function') callback(payload || {})
-      }
-      electron.ipcRenderer.on('sync:status-changed', handler)
-      return () => electron.ipcRenderer.removeListener('sync:status-changed', handler)
-    },
-    onSyncAccountStorageChanged: (callback) => {
-      const handler = (_event, payload) => {
-        if (typeof callback === 'function') callback(payload)
-      }
-      electron.ipcRenderer.on('sync:account-storage-changed', handler)
-      return () => electron.ipcRenderer.removeListener('sync:account-storage-changed', handler)
-    },
     onLocalShortcutsChanged: (callback) => {
       const handler = (_event) => {
         if (typeof callback === 'function') callback()
@@ -1476,12 +1326,6 @@ window.ztools = {
        * @returns 供应商配置查询结果
        */
       getAll: async () => await electron.ipcRenderer.invoke('internal:ai-providers-get-all'),
-      /**
-       * 获取只读的 ZTools 官方模型和登录状态。
-       * @returns {Promise<unknown>} 官方模型查询结果
-       */
-      getOfficial: async () =>
-        await electron.ipcRenderer.invoke('internal:ai-providers-get-official'),
       /**
        * 添加 AI 供应商。
        * @param {object} provider 供应商连接信息和已选模型

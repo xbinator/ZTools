@@ -7,11 +7,9 @@ import databaseAPI from './shared/database.js'
 import windowManager from '../managers/windowManager'
 import { applyWindowMaterial, getDefaultWindowMaterial } from '../utils/windowUtils.js'
 import { isInAppUpdateSource } from '../../shared/updateSource'
-import {
-  fetchLatestServerUpdate,
-  resolvePlatformUpdateInfo,
-  type ServerUpdateInfo
-} from './serverUpdateCatalog'
+import { fetchLatestServerUpdate, resolvePlatformUpdateInfo } from './serverUpdateCatalog'
+
+const AUTO_UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000
 
 export class UpdaterAPI {
   private mainWindow: BrowserWindow | null = null
@@ -20,7 +18,7 @@ export class UpdaterAPI {
   private updateWindow: BrowserWindow | null = null
   private platformUpdater: PlatformUpdaterService | null = null
   private initializationPromise: Promise<void> = Promise.resolve()
-  private lastAutoNotifiedVersion = ''
+  private autoCheckTimer: ReturnType<typeof setInterval> | null = null
 
   /**
    * 初始化平台更新服务并注册更新窗口使用的 IPC。
@@ -42,6 +40,9 @@ export class UpdaterAPI {
     })
 
     this.setupIPC()
+
+    // 更新器自行维护检查周期，不再依赖账号、同步或活动上报链路。
+    this.configureAutoCheck(this.readAutoCheckSetting())
   }
 
   private handleUpdateDownloaded(info: PlatformUpdateInfo, showWindow: boolean): void {
@@ -105,27 +106,42 @@ export class UpdaterAPI {
    * @returns 无返回值
    */
   public setAutoCheck(enabled: boolean): void {
-    // 更新检查由活动心跳统一调度，开关只控制是否展示自动提示。
+    // 先切换本地定时器，再把最新开关状态通知所有更新界面。
+    this.configureAutoCheck(enabled)
     this.sendUpdateEvent('auto-check-update-changed', enabled)
     if (enabled) void this.checkUpdate()
   }
 
   /**
-   * 消费活动心跳返回的版本信息，并按用户设置展示一次自动更新提示。
-   * @param update 服务端心跳返回的更新信息；没有适用版本时为 null。
-   * @returns 更新信息处理完成后的 Promise。
+   * 读取设备级自动检查更新偏好。
+   * @returns 未显式关闭时返回 true。
    */
-  public async handleHeartbeatUpdate(update: ServerUpdateInfo | null): Promise<void> {
-    if (!update?.available || update.latestVersion === this.lastAutoNotifiedVersion) return
-    const settings = databaseAPI.dbGet('settings-general')
-    if (settings?.autoCheckUpdate === false) return
+  private readAutoCheckSetting(): boolean {
     try {
-      const info = await resolvePlatformUpdateInfo(update)
-      this.lastAutoNotifiedVersion = info.version
-      this.showAvailableUpdate(info)
+      return databaseAPI.dbGet('settings-general')?.autoCheckUpdate !== false
     } catch (error) {
-      console.error('[Updater] 解析服务端更新信息失败:', error)
+      console.warn('[Updater] 读取自动检查更新偏好失败，沿用默认开启状态:', error)
+      return true
     }
+  }
+
+  /**
+   * 按开关状态创建或停止独立的自动更新检查周期。
+   * @param enabled 是否启用周期检查。
+   * @returns 无返回值。
+   */
+  private configureAutoCheck(enabled: boolean): void {
+    // 每次配置前先释放旧计时器，避免重复注册和退出后残留。
+    if (this.autoCheckTimer) {
+      clearInterval(this.autoCheckTimer)
+      this.autoCheckTimer = null
+    }
+    if (!enabled) return
+
+    this.autoCheckTimer = setInterval(() => {
+      void this.checkUpdate()
+    }, AUTO_UPDATE_CHECK_INTERVAL_MS)
+    this.autoCheckTimer.unref?.()
   }
 
   private getDownloadStatus(): ReturnType<PlatformUpdaterService['getDownloadStatus']> & {
@@ -162,7 +178,12 @@ export class UpdaterAPI {
     return this.platformUpdater.installDownloadedUpdate()
   }
 
+  /**
+   * 停止更新检查周期并释放平台更新器资源。
+   * @returns 无返回值。
+   */
   public cleanup(): void {
+    this.configureAutoCheck(false)
     this.platformUpdater?.cleanup()
   }
 

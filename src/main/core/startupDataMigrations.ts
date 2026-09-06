@@ -5,6 +5,7 @@ import { HOST_STORAGE_KEYS, LEGACY_CAMEL_CASE_STORAGE_KEYS } from '../../shared/
 import { getZToolsDataLayout, type AppDataPathOptions } from './appData/appDataPaths.js'
 import { rewriteLegacyStoragePaths } from './storage/legacyPathRewriter.js'
 import aiProviderService from './aiProviderService.js'
+import { cleanupRemovedCloudFeatureState } from './privacy/removedCloudFeatureState.js'
 
 const LEGACY_WEB_SEARCH_FEATURE_PREFIX = 'web-search-'
 const LEGACY_PATH_STORAGE_KEYS = [
@@ -77,6 +78,16 @@ function migrateLegacyMacAppIcons(items: any[]): boolean {
  * @returns 无返回值
  */
 export function runStartupDataMigrations(): void {
+  // 最先清除废弃云功能的凭据和队列，避免后续初始化重新读取敏感状态。
+  try {
+    const result = cleanupRemovedCloudFeatureState()
+    if (result.removedDocuments + result.removedCheckpoints + result.removedTasks > 0) {
+      console.log('[StartupMigration] 已清理废弃云功能状态:', result)
+    }
+  } catch (error) {
+    console.error('[StartupMigration] 清理废弃云功能状态失败:', error)
+  }
+
   // 先升级 AI 配置，保证后续设置页和插件调用只读取统一的供应商结构。
   aiProviderService.migrateLegacyData()
   migrateLegacyFileUrls()

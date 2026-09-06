@@ -239,7 +239,7 @@ export class ElectronUpdaterService {
 
   /**
    * 根据可选服务端 feed 下载当前更新，并在完成后启动平台安装流程。
-   * @param updateInfo 心跳发现的目标版本及服务端 feed 地址。
+   * @param updateInfo 更新检查发现的目标版本及服务端 feed 地址。
    * @returns 下载和安装启动结果。
    */
   public async downloadAndInstall(

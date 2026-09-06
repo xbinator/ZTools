@@ -14,7 +14,6 @@ import localShortcutsAPI from './renderer/localShortcuts'
 import pluginsAPI from './renderer/plugins'
 import settingsAPI from './renderer/settings'
 import storageAPI from './renderer/storage'
-import syncAPI from './renderer/sync'
 import systemAPI from './renderer/system'
 import { systemSettingsAPI } from './renderer/systemSettings'
 import windowAPI from './renderer/window'
@@ -115,7 +114,6 @@ class APIManager {
     storageAPI.init()
     systemAPI.init(mainWindow)
     systemSettingsAPI.init()
-    syncAPI.init(mainWindow, pluginManager)
     localShortcutsAPI.init(mainWindow)
     localShortcutsAPI.setCommandsCacheInvalidator(() => appsAPI.invalidateCommandsCache(false))
 
@@ -131,7 +129,7 @@ class APIManager {
     pluginAiAPI.init(mainWindow, pluginManager)
     pluginLifecycleAPI.init(mainWindow, pluginManager)
     pluginUIAPI.init(mainWindow, pluginManager)
-    pluginUserAPI.init(pluginManager)
+    pluginUserAPI.init()
     // 注入主题信息变更钩子：当主题色/材质变更时通知所有插件视图
     windowManager.setOnThemeInfoChanged(() => {
       pluginUIAPI.broadcastThemeInfoToAllPlugins()

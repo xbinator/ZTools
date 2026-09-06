@@ -79,29 +79,15 @@ describe('plugin preload internal api bridge', () => {
     )
   })
 
-  it('exposes accountDelete through the account IPC channel', async () => {
+  it('does not expose official account management bridges', () => {
     require(preloadPath)
 
     const internalApi = (globalThis as any).window.ztools?.internal
 
-    expect(internalApi?.accountDelete).toBeTypeOf('function')
-
-    await internalApi.accountDelete()
-
-    expect(ipcInvoke).toHaveBeenCalledWith('account:delete')
-  })
-
-  it('exposes accountChangePassword through the account IPC channel', async () => {
-    require(preloadPath)
-
-    const internalApi = (globalThis as any).window.ztools?.internal
-    const params = { currentPassword: 'old-password', newPassword: 'new-password' }
-
-    expect(internalApi?.accountChangePassword).toBeTypeOf('function')
-
-    await internalApi.accountChangePassword(params)
-
-    expect(ipcInvoke).toHaveBeenCalledWith('account:change-password', params)
+    expect(internalApi?.accountDelete).toBeUndefined()
+    expect(internalApi?.accountChangePassword).toBeUndefined()
+    expect(ipcInvoke).not.toHaveBeenCalledWith('account:delete')
+    expect(ipcInvoke).not.toHaveBeenCalledWith('account:change-password', expect.anything())
   })
 
   it('converts reactive AI provider data before add and update IPC calls', async () => {

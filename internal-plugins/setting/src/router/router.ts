@@ -124,17 +124,6 @@ const homeRoutes: MenuRouterItemType[] = [
     }
   },
   {
-    path: '/sync',
-    name: 'Sync',
-    component: () => import('@/views/SyncSetting/SyncSetting.vue'),
-    meta: {
-      menu: {
-        label: '数据同步',
-        icon: 'i-z-cloud'
-      }
-    }
-  },
-  {
     path: '/debug',
     name: 'Debug',
     component: () => import('@/views/DebugSetting/DebugSetting.vue'),
@@ -169,13 +158,15 @@ const homeRoutes: MenuRouterItemType[] = [
   },
   {
     path: '/account',
-    name: 'Account',
-    component: () => import('@/views/AccountSetting/AccountSetting.vue')
+    redirect: '/generalSetting'
+  },
+  {
+    path: '/sync',
+    redirect: '/generalSetting'
   },
   {
     path: '/notifications',
-    name: 'Notifications',
-    component: () => import('@/views/NotificationCenter/NotificationCenter.vue')
+    redirect: '/generalSetting'
   },
   {
     path: '/pluginInstaller',

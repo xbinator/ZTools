@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fetchLatestServerUpdate } from '../../src/main/api/serverUpdateCatalog'
 
 type IPCListener = (...args: unknown[]) => void
 
@@ -170,5 +171,25 @@ describe('updater window controls', () => {
     // 非网页协议必须被拦截，但不能交由操作系统执行。
     navigationListener?.({ preventDefault: vi.fn() }, 'file:///tmp/untrusted-release-note')
     expect(mocks.openExternal).toHaveBeenCalledTimes(2)
+  })
+
+  it('checks for updates on its own interval without an activity heartbeat', async () => {
+    vi.useFakeTimers()
+    const updater = new UpdaterAPI()
+
+    try {
+      updater.init({ webContents: { send: vi.fn() } } as any)
+
+      await vi.advanceTimersByTimeAsync(30 * 60 * 1000)
+
+      expect(fetchLatestServerUpdate).toHaveBeenCalledOnce()
+
+      updater.cleanup()
+      await vi.advanceTimersByTimeAsync(30 * 60 * 1000)
+      expect(fetchLatestServerUpdate).toHaveBeenCalledOnce()
+    } finally {
+      updater.cleanup()
+      vi.useRealTimers()
+    }
   })
 })

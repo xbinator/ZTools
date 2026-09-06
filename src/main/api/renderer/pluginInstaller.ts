@@ -27,11 +27,7 @@ import { httpGet } from '../../utils/httpRequest.js'
 import { sleep } from '../../utils/common.js'
 import databaseAPI from '../shared/database'
 import { openDialog } from '../../utils/windowUtils'
-import {
-  PluginMarketAuthMode,
-  getPluginMarketApiBase,
-  requestPluginMarket
-} from './pluginMarketConfig'
+import { getPluginMarketApiBase, requestPluginMarket } from './pluginMarketConfig'
 import { getPluginsPath } from '../../core/appData/appDataPaths'
 
 /** 插件的本地安装目录 */
@@ -396,9 +392,7 @@ export class PluginInstallerAPI {
 
     const marketApiBase = getPluginMarketApiBase()
     const response = await requestPluginMarket(
-      `${marketApiBase}/plugins/download?name=${encodeURIComponent(pluginName)}`,
-      {},
-      PluginMarketAuthMode.OPTIONAL
+      `${marketApiBase}/plugins/download?name=${encodeURIComponent(pluginName)}`
     )
     const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
     // 新版优先安装 ZPX；回退 ZIP 仅用于服务端滚动升级和历史插件数据。

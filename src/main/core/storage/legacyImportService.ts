@@ -33,7 +33,6 @@ export interface LegacyImportOptions {
   pluginOrder?: boolean
   pluginData?: boolean
   aiModels?: boolean
-  legacySyncConfig?: boolean
 }
 
 export interface LegacyImportResult {
@@ -52,7 +51,10 @@ const PLUGIN_INSTALL_KEYS = new Set([
 ])
 const PLUGIN_ORDER_KEYS = new Set([toHostDocId(HOST_STORAGE_KEYS.pluginOrder)])
 const AI_MODEL_KEYS = new Set([toHostDocId(HOST_STORAGE_KEYS.aiModels)])
-const LEGACY_SYNC_KEYS = new Set(['SYNC/config'])
+const REMOVED_CLOUD_DOCUMENT_IDS = new Set([
+  'AUTH/official-account',
+  'ZTOOLS/notification-public-state'
+])
 
 const FULL_IMPORT_KEY_MAP = new Map<string, string>(
   [
@@ -235,18 +237,7 @@ function sanitizeLegacyDocForImport(
     pathRewrittenDoc.data = installedNames.filter((name: string) => !disabledNames.includes(name))
   }
 
-  if (pathRewrittenDoc?._id !== 'SYNC/config') return pathRewrittenDoc
-  const data = pathRewrittenDoc.data || {}
-  return {
-    ...pathRewrittenDoc,
-    data: {
-      ...data,
-      enabled: false,
-      token: '',
-      refreshToken: '',
-      username: ''
-    }
-  }
+  return pathRewrittenDoc
 }
 
 function normalizePluginNames(value: unknown): string[] {
@@ -299,6 +290,9 @@ function copyDirectoryContents(sourceDir: string, targetDir: string): boolean {
 }
 
 function getImportTargetDocId(docId: string, options: LegacyImportOptions): string | null {
+  // 旧账号、远程同步和通知状态不得从历史目录恢复。
+  if (REMOVED_CLOUD_DOCUMENT_IDS.has(docId) || docId.startsWith('SYNC/')) return null
+
   if (options.mode) {
     if (BASE_SETTING_KEYS.has(docId)) return docId
     if (PLUGIN_INSTALL_KEYS.has(docId)) return docId
@@ -314,7 +308,6 @@ function getImportTargetDocId(docId: string, options: LegacyImportOptions): stri
   if (options.pluginOrder && PLUGIN_ORDER_KEYS.has(docId)) return docId
   if (options.pluginData && docId.startsWith('PLUGIN/')) return docId
   if (options.aiModels && AI_MODEL_KEYS.has(docId)) return docId
-  if (options.legacySyncConfig && LEGACY_SYNC_KEYS.has(docId)) return docId
   return null
 }
 

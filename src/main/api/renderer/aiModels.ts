@@ -1,12 +1,10 @@
 import { ipcMain } from 'electron'
 import aiProviderService from '../../core/aiProviderService.js'
-import officialAIService from '../../core/officialAIService.js'
 import type {
   AiProviderInput,
   AiProviderMutationResult,
   AiProviderStore,
-  AiRemoteModel,
-  OfficialAiProviderStatus
+  AiRemoteModel
 } from '../../../shared/aiProviderShared.js'
 
 /**
@@ -27,7 +25,6 @@ class AiModelsAPI {
    */
   private setupIPC(): void {
     ipcMain.handle('ai-providers:get-all', () => this.getAllProviders())
-    ipcMain.handle('ai-providers:get-official', () => this.getOfficialProvider())
     ipcMain.handle('ai-providers:add', (_event, provider: AiProviderInput) =>
       this.addProvider(provider)
     )
@@ -51,14 +48,6 @@ class AiModelsAPI {
    */
   public getAllProviders(): AiProviderStore {
     return aiProviderService.getStore()
-  }
-
-  /**
-   * 获取只读的 ZTools 官方模型及当前登录状态。
-   * @returns 官方供应商状态
-   */
-  public async getOfficialProvider(): Promise<OfficialAiProviderStatus> {
-    return officialAIService.getProviderStatus()
   }
 
   /**

@@ -75,12 +75,6 @@
       "cmds": ["所有指令"]
     },
     {
-      "code": "ui.router?router=Sync",
-      "explain": "WebDAV 同步",
-      "icon": "logo.png",
-      "cmds": ["WebDAV 同步"]
-    },
-    {
       "code": "ui.router?router=About",
       "explain": "关于 ZTools",
       "icon": "logo.png",

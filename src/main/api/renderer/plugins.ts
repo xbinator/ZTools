@@ -187,22 +187,6 @@ export class PluginsAPI {
     ipcMain.handle('fetch-plugin-market-recommendations', (_event, limit?: number) =>
       this.market.fetchPluginMarketRecommendations(limit)
     )
-    ipcMain.handle(
-      'fetch-plugin-market-comments',
-      (_event, pluginName: string, page?: number, pageSize?: number, anchorId?: number) =>
-        this.market.fetchComments(pluginName, page, pageSize, anchorId)
-    )
-    ipcMain.handle(
-      'create-plugin-market-comment',
-      (_event, input: { pluginName: string; content: string; parentId?: number | null }) =>
-        this.market.createComment(input)
-    )
-    ipcMain.handle('toggle-plugin-market-comment-like', (_event, commentId: number) =>
-      this.market.toggleCommentLike(commentId)
-    )
-    ipcMain.handle('delete-plugin-market-comment', (_event, commentId: number) =>
-      this.market.deleteComment(commentId)
-    )
     ipcMain.handle('install-plugin-from-market', (event, plugin: any) =>
       this.installer.installPluginFromMarket(plugin, event.sender)
     )

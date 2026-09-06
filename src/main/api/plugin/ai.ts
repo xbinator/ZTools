@@ -2,7 +2,6 @@ import { ipcMain } from 'electron'
 import type { PluginManager } from '../../managers/pluginManager'
 import detachedWindowManager from '../../core/detachedWindowManager'
 import aiProviderService, { type ResolvedAiModel } from '../../core/aiProviderService.js'
-import officialAIService from '../../core/officialAIService.js'
 import { createAdapter } from './aiProtocol/adapters'
 import {
   normalizeAiModelCapabilities,
@@ -263,14 +262,7 @@ class PluginAiAPI {
    * @returns 带供应商展示信息的模型条目
    */
   private async getAllAiModels(): Promise<AiModelChoice[]> {
-    const localModels = aiProviderService.getModelChoices()
-    try {
-      return [...localModels, ...(await officialAIService.getModelChoices())]
-    } catch (error) {
-      // 官方服务暂不可用不应隐藏用户已经配置的本地模型。
-      console.warn('[AI] 获取官方模型失败:', error)
-      return localModels
-    }
+    return aiProviderService.getModelChoices()
   }
 
   /**
@@ -280,13 +272,7 @@ class PluginAiAPI {
    * @throws 旧式远端模型 ID 同时匹配多个供应商时抛出歧义错误
    */
   private async getModelConfig(modelRef?: string): Promise<ResolvedAiModel | null> {
-    // 明确的官方选择值优先解析，避免被本地同名模型抢占。
-    if (officialAIService.isOfficialReference(modelRef)) {
-      return officialAIService.resolveModel(modelRef)
-    }
-    const localModel = aiProviderService.resolveModel(modelRef)
-    if (localModel) return localModel
-    return officialAIService.resolveModel(modelRef)
+    return aiProviderService.resolveModel(modelRef)
   }
 
   /**
